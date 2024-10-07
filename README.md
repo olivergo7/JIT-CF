@@ -31,10 +31,10 @@ Before the replication, you need to unzip `data.zip` file firstly.
 
 ### **JIT-Contrast Implementation**
 
-To train JIT-Contrast, run the following command:
+To train JIT-CF, run the following command:
 
 ```shell
-python -m JITContrast.concatCL.run \
+python -m JITCF.concatCL.run \
     --output_dir=model/jitcl/saved_models_concat_cl/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
@@ -60,7 +60,7 @@ python -m JITContrast.concatCL.run \
 To obtain the evaluation, run the following command:
 
 ```shell
-python -m JITFine.concatCL.run \
+python -m JITCF.concatCL.run \
     --output_dir=model/jitcl/saved_models_concat_cl/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
@@ -85,10 +85,10 @@ python -m JITFine.concatCL.run \
 
 ### Ablation Experiment
 
-To train JIT-Contrast without contrasting learning, run the following command:
+To train JIT-CF without contrasting learning, run the following command:
 
 ```shell
-python -m JITContrast.concat.run \
+python -m JITCF.concat.run \
     --output_dir=model/jitcl/saved_models_concat/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
@@ -114,7 +114,7 @@ python -m JITContrast.concat.run \
 To obtain the evaluation, run the following command:
 
 ```shell
-python -m JITFine.concat.run \
+python -m JITCF.concat.run \
     --output_dir=model/jitcl/saved_models_concat/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
@@ -137,10 +137,10 @@ python -m JITFine.concat.run \
 
 
 
-To train JIT-Contrast using only semantic feature without contrasting learning, run the following command:
+To train JIT-CF using only semantic feature without contrasting learning, run the following command:
 
 ```shell
-python -m JITContrast.semantic.run \
+python -m JITCF.semantic.run \
     --output_dir=model/jitcl/saved_models_semantic/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
@@ -164,7 +164,7 @@ python -m JITContrast.semantic.run \
 To obtain the evaluation, run the following command:
 
 ```shell
-python -m JITFine.semantic.run \
+python -m JITCF.semantic.run \
     --output_dir=model/jitfine/saved_models_semantic/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
@@ -181,7 +181,7 @@ python -m JITFine.semantic.run \
     --learning_rate 2e-5 \
     --max_grad_norm 1.0 \
     --patience 10 \
-    --seed 42 2>&1|  tee model/jitfine/saved_models_semantic/test.log
+    --seed 42 2>&1|  tee model/jitcl/saved_models_semantic/test.log
 ```
 
 
@@ -229,7 +229,7 @@ python -m JITFine.semanticCL.run \
     --learning_rate 2e-5 \
     --max_grad_norm 1.0 \
     --patience 10 \
-    --seed 42 2>&1|  tee model/jitfine/saved_models_semantic_cl/test.log
+    --seed 42 2>&1|  tee model/jitcl/saved_models_semantic_cl/test.log
 ```
 The fully connected layer and activation function can be adjusted by yourself in the model.py file. The default in the code is two layers plus the Relu activation function.
 

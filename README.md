@@ -1,8 +1,8 @@
-# JIT-Contrast-replication-package
+# JIT-CF-replication-package
 
 
 
-This repository contains source code that we used to perform experiment in paper titled "JIT-Contrast: Enhancing Just-In-Time Defect Prediction with Contrastive Learning and Feature Fusion".
+This repository contains source code that we used to perform experiment in paper titled "JIT-CF: Enhancing Just-In-Time Defect Prediction with Contrastive Learning and Feature Fusion".
 
 
 Please follow the steps below to reproduce the result
@@ -16,7 +16,7 @@ Run the following command in terminal (or command line) to prepare virtual envir
 
 ```shell
 conda env create --file requirements.yml
-conda activate jitcontrast
+conda activate jitcf
 ```
 
 ### R Environment Setup

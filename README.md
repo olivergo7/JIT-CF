@@ -225,7 +225,7 @@ The fully connected layer and activation function can be adjusted by yourself in
 
 ### **RQ1 Baseline Implementation**
 
-There are 5 baselines in RQ1(i.e., `LApredict`, `Deeper`, `DeepJIT`, `CC2Vec`, and `JITLine`). To reproduce the results of baselines, run the following commands: 
+To reproduce the results of 4 baselines in RQ1(i.e., `LApredict`, `Deeper`, `DeepJIT`, `CC2Vec`, and `JITLine`).  run the following commands: 
 
 - LApredict
 
@@ -249,12 +249,6 @@ There are 5 baselines in RQ1(i.e., `LApredict`, `Deeper`, `DeepJIT`, `CC2Vec`, a
 
   ```shell
   python -m baselines.CC2Vec.cc2vec
-  ```
-
-- JITLine
-
-  ```shell
-  refer to RQ2
   ```
 
 

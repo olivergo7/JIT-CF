@@ -1,16 +1,12 @@
 # JIT-CF-replication-package
 
 
-
 This repository contains source code that we used to perform experiment in paper titled "JIT-CF: Enhancing Just-In-Time Defect Prediction with Contrastive Learning and Feature Fusion".
-
 
 Please follow the steps below to reproduce the result
 
 
 ## Environment Setup
-
-### Python Environment Setup
 
 Run the following command in terminal (or command line) to prepare virtual environment
 
@@ -19,17 +15,11 @@ conda env create --file requirements.yml
 conda activate jitcf
 ```
 
-### R Environment Setup
-
 Download the following package: `tidyverse`, `gridExtra`, `ModelMetrics`, `caret`, `reshape2`, `pROC`, `effsize`, `ScottKnottESD`
 
-## Experiment Result Replication Guide
-
-Before the replication, you need to unzip `data.zip` file firstly.
 
 
-
-### **JIT-Contrast Implementation**
+### **JIT-CF Implementation**
 
 To train JIT-CF, run the following command:
 
@@ -40,9 +30,9 @@ python -m JITCF.concatCL.run \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_train \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -53,7 +43,7 @@ python -m JITCF.concatCL.run \
     --evaluate_during_training \
     --feature_size 14 \
     --patience 10 \
-    --seed 42 2>&1| tee model/jitcl/saved_models_concat_cl/train.log
+    --seed 42 2>&1| tee model/jitcf/saved_models_concat_cl/train.log
 
 ```
 
@@ -61,14 +51,14 @@ To obtain the evaluation, run the following command:
 
 ```shell
 python -m JITCF.concatCL.run \
-    --output_dir=model/jitcl/saved_models_concat_cl/checkpoints \
+    --output_dir=model/jitcf/saved_models_concat_cl/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_test \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -79,7 +69,7 @@ python -m JITCF.concatCL.run \
     --evaluate_during_training \
     --only_adds \
     --buggy_line_filepath=data/jitcl/changes_complete_buggy_line_level.pkl \
-    --seed 42 2>&1 | tee model/jitcl/saved_models_concat_cl/test.log
+    --seed 42 2>&1 | tee model/jitcf/saved_models_concat_cl/test.log
 
 ```
 
@@ -89,14 +79,14 @@ To train JIT-CF without contrasting learning, run the following command:
 
 ```shell
 python -m JITCF.concat.run \
-    --output_dir=model/jitcl/saved_models_concat/checkpoints \
+    --output_dir=model/jitcf/saved_models_concat/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_train \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -107,7 +97,7 @@ python -m JITCF.concat.run \
     --evaluate_during_training \
     --feature_size 14 \
     --patience 10 \
-    --seed 42 2>&1| tee model/jitcl/saved_models_concat/train.log
+    --seed 42 2>&1| tee model/jitcf/saved_models_concat/train.log
 
 ```
 
@@ -115,14 +105,14 @@ To obtain the evaluation, run the following command:
 
 ```shell
 python -m JITCF.concat.run \
-    --output_dir=model/jitcl/saved_models_concat/checkpoints \
+    --output_dir=model/jitcf/saved_models_concat/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_test \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -133,22 +123,22 @@ python -m JITCF.concat.run \
     --evaluate_during_training \
     --only_adds \
     --buggy_line_filepath=data/jitcl/changes_complete_buggy_line_level.pkl \
-    --seed 42 2>&1 | tee model/jitcl/saved_models_concat/test.log
+    --seed 42 2>&1 | tee model/jitcf/saved_models_concat/test.log
 
 
 
-To train JIT-CF using only semantic feature without contrasting learning, run the following command:
+To train JIT-Contrast using only semantic feature without contrasting learning, run the following command:
 
 ```shell
 python -m JITCF.semantic.run \
-    --output_dir=model/jitcl/saved_models_semantic/checkpoints \
+    --output_dir=model/jitcf/saved_models_semantic/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_train \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -158,21 +148,21 @@ python -m JITCF.semantic.run \
     --max_grad_norm 1.0 \
     --evaluate_during_training \
     --patience 10 \
-    --seed 42 2>&1| tee model/jitcl/saved_models_semantic/train.log
+    --seed 42 2>&1| tee model/jitcf/saved_models_semantic/train.log
 ```
 
 To obtain the evaluation, run the following command:
 
 ```shell
 python -m JITCF.semantic.run \
-    --output_dir=model/jitfine/saved_models_semantic/checkpoints \
+    --output_dir=model/jitcf/saved_models_semantic/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_test \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -181,22 +171,22 @@ python -m JITCF.semantic.run \
     --learning_rate 2e-5 \
     --max_grad_norm 1.0 \
     --patience 10 \
-    --seed 42 2>&1|  tee model/jitcl/saved_models_semantic/test.log
+    --seed 42 2>&1|  tee model/jitcf/saved_models_semantic/test.log
 ```
 
 
 To train JIT-Contrast using only semantic feature with contrasting learning, run the following command:
 
 ```shell
-python -m JITContrast.semanticCL.run \
-    --output_dir=model/jitcl/saved_models_semantic_cl/checkpoints \
+python -m JITCF.semanticCL.run \
+    --output_dir=model/jitcf/saved_models_semantic_cl/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_train \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -206,21 +196,21 @@ python -m JITContrast.semanticCL.run \
     --max_grad_norm 1.0 \
     --evaluate_during_training \
     --patience 10 \
-    --seed 42 2>&1| tee model/jitcl/saved_models_semantic_cl/train.log
+    --seed 42 2>&1| tee model/jitcf/saved_models_semantic_cl/train.log
 ```
 
 To obtain the evaluation, run the following command:
 
 ```shell
-python -m JITFine.semanticCL.run \
-    --output_dir=model/jitfine/saved_models_semantic_cl/checkpoints \
+python -m JITCF.semanticCL.run \
+    --output_dir=model/jitcf/saved_models_semantic_cl/checkpoints \
     --config_name=microsoft/codebert-base \
     --model_name_or_path=microsoft/codebert-base \
     --tokenizer_name=microsoft/codebert-base \
     --do_test \
-    --train_data_file data/jitcl/changes_train.pkl data/jitcl/features_train.pkl \
-    --eval_data_file data/jitcl/changes_valid.pkl data/jitcl/features_valid.pkl\
-    --test_data_file data/jitcl/changes_test.pkl data/jitcl/features_test.pkl\
+    --train_data_file data/jitcf/changes_train.pkl data/jitcf/features_train.pkl \
+    --eval_data_file data/jitcf/changes_valid.pkl data/jitcf/features_valid.pkl\
+    --test_data_file data/jitcf/changes_test.pkl data/jitcf/features_test.pkl\
     --epoch 50 \
     --max_seq_length 512 \
     --max_msg_length 64 \
@@ -229,7 +219,7 @@ python -m JITFine.semanticCL.run \
     --learning_rate 2e-5 \
     --max_grad_norm 1.0 \
     --patience 10 \
-    --seed 42 2>&1|  tee model/jitcl/saved_models_semantic_cl/test.log
+    --seed 42 2>&1|  tee model/jitcf/saved_models_semantic_cl/test.log
 ```
 The fully connected layer and activation function can be adjusted by yourself in the model.py file. The default in the code is two layers plus the Relu activation function.
 

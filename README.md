@@ -256,11 +256,6 @@ To reproduce the results of 4 baselines in RQ1(i.e., `LApredict`, `Deeper`, `Dee
 
 
 
-- For Deeper,  DeepJIT, CC2Vec, we adopt the implementation from this project
-  - [*Deep Just-in-Time Defect Prediction: How Far Are We?*](https://github.com/ZZR0/ISSTA21-JIT-DP) 
- 
-- For JITLine, we adopt the implementation from this project
-  - [JITLine: A Simpler, Better, Faster, Finer-grained Just-In-Time Defect Prediction](https://zenodo.org/record/4596503)
 
 - For JITFine, we adopt the implementation from this project
   - [The Best of Both Worlds: Integrating Semantic Features with Expert Features for Defect Prediction and Localization](https://github.com/jacknichao/JIT-Fine)

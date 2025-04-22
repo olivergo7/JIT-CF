@@ -353,12 +353,10 @@ def main():
 
     # add new special tokens
     tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_name)
-    special_tokens_dict = {'additional_special_tokens': ["[ADD]", "[DEL]"]}
-    tokenizer.add_special_tokens(special_tokens_dict)
+    tokenizer.add_special_tokens({'additional_special_tokens': ["[ADD]", "[DEL]"]})
 
     model = RobertaModel.from_pretrained(args.model_name_or_path, config=config)
 
-    model.resize_token_embeddings(len(tokenizer))
     model = Model(model, config, tokenizer, args)
 
     logger.info("Training/evaluation parameters %s", args)

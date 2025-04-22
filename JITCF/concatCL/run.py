@@ -423,6 +423,8 @@ def parse_args():
                         help="Number of features")
     parser.add_argument('--num_labels', type=int, default=2,
                         help="Number of labels")
+    parser.add_argument('--no_abstraction', action='store_true', help='Disable abstraction')
+    parser.add_argument('--head_dropout_prob', type=float, default=0.1, help='Head dropout probability')
     parser.add_argument('--semantic_checkpoint', type=str, default=None,
                         help="Best checkpoint for semantic feature")
     parser.add_argument('--manual_checkpoint', type=str, default=None,
@@ -458,12 +460,11 @@ def main(args):
     config.feature_size = args.feature_size
     config.hidden_dropout_prob = args.head_dropout_prob
     tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_name)
-    special_tokens_dict = {'additional_special_tokens': ["[ADD]", "[DEL]"]}
-    tokenizer.add_special_tokens(special_tokens_dict)
+    tokenizer.add_special_tokens({'additional_special_tokens': ["[ADD]", "[DEL]"]})
 
     model = RobertaModel.from_pretrained(args.model_name_or_path, config=config)
 
-    model.resize_token_embeddings(len(tokenizer))
+
     logger.info("Training/evaluation parameters %s", args)
 
     model = Model(model, config, tokenizer, args)

@@ -65,12 +65,15 @@ class Model(nn.Module):
         last_layer_attn_weights = outputs.attentions[self.config.num_hidden_layers - 1][:, :,
                                   0].detach() if output_attentions else None
 
-        logits = self.classifier(outputs[0], manual_features)
+        # 提取 [CLS] 特征用于对比损失
+        cls_feature = outputs[0][:, 0, :]  # shape: [batch_size, hidden_size]
 
+        logits = self.classifier(outputs[0], manual_features)
         prob = torch.sigmoid(logits)
+
         if labels is not None:
             loss_fct = BCELoss()
-            loss = loss_fct(prob, labels.unsqueeze(1).float())
-            return loss, prob, last_layer_attn_weights
+            loss_cls = loss_fct(prob, labels.unsqueeze(1).float())
+            return loss_cls, prob, last_layer_attn_weights, cls_feature
         else:
-            return prob
+            return prob, cls_feature

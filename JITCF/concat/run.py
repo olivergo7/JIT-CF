@@ -18,8 +18,8 @@ from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer, RobertaModel)
 from tqdm import tqdm, trange
 import multiprocessing
-from JITFine.concat.model import Model
-from JITFine.my_util import convert_examples_to_features, TextDataset, eval_result, preprocess_code_line, \
+from JITCF.concat.model import Model
+from JITCF.my_util import convert_examples_to_features, TextDataset, eval_result, preprocess_code_line, \
     get_line_level_metrics, create_path_if_not_exist
 
 logger = logging.getLogger(__name__)

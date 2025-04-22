@@ -7,45 +7,24 @@ from torch.nn import BCELoss
 class RobertaClassificationHead(nn.Module):
     """用于句子级分类任务的头部。"""
 
-    def __init__(self, config):
+     def __init__(self, config, args):
         super().__init__()
-        self.manual_dense = nn.Linear(config.feature_size, config.hidden_size)
-
-        # 定义7个全连接层
-        self.dense1 = nn.Linear(config.hidden_size + config.hidden_size, config.hidden_size)
+        self.dense1 = nn.Linear(config.hidden_size, config.hidden_size)
+        self.relu = nn.ReLU()  # ReLU activation
         self.dense2 = nn.Linear(config.hidden_size, config.hidden_size)
-        self.dense3 = nn.Linear(config.hidden_size, config.hidden_size)
-        self.dense4 = nn.Linear(config.hidden_size, config.hidden_size)
-        self.dense5 = nn.Linear(config.hidden_size, config.hidden_size)
-        self.dense6 = nn.Linear(config.hidden_size, config.hidden_size)
-        self.dense7 = nn.Linear(config.hidden_size, config.hidden_size)
-
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.out_proj_new = nn.Linear(config.hidden_size, 1)
+        self.out_proj = nn.Linear(config.hidden_size, 1)
+        self.args = args
 
-    def forward(self, features, manual_features=None, **kwargs):
-        x = features[:, 0, :]  # 取<s> token（相当于[CLS]）  [batch_size, hidden_size]
-        y = manual_features.float()  # [batch_size, feature_size]
-        y = self.manual_dense(y)
-        y = torch.tanh(y)
-
-        x = torch.cat((x, y), dim=-1)
-        x = F.relu(self.dense1(x))  # 第一层全连接并使用ReLU激活
+    def forward(self, features, **kwargs):
+        x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
         x = self.dropout(x)
-        x = F.relu(self.dense2(x))  # 第二层全连接
+        x = self.dense1(x)
+        x = self.relu(x)  # Apply ReLU activation
+        x = self.dense2(x)
+        x = self.relu(x)  # Apply ReLU activation again
         x = self.dropout(x)
-        x = F.relu(self.dense3(x))  # 第三层全连接
-        x = self.dropout(x)
-        x = F.relu(self.dense4(x))  # 第四层全连接
-        x = self.dropout(x)
-        x = F.relu(self.dense5(x))  # 第五层全连接
-        x = self.dropout(x)
-        x = F.relu(self.dense6(x))  # 第六层全连接
-        x = self.dropout(x)
-        x = F.relu(self.dense7(x))  # 第七层全连接
-        x = self.dropout(x)
-        x = self.out_proj_new(x)  # 输出层
-
+        x = self.out_proj(x)
         return x
 
 

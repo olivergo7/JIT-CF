@@ -19,8 +19,8 @@ from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer, RobertaModel)
 from tqdm import tqdm, trange
 import multiprocessing
-from JITContrast.semantic.model import Model
-from JITContrast.my_util import convert_examples_to_features, TextDataset, eval_result, create_path_if_not_exist
+from JITCF.semantic.model import Model
+from JITCF.my_util import convert_examples_to_features, TextDataset, eval_result, create_path_if_not_exist
 
 logger = logging.getLogger(__name__)
 

@@ -36,16 +36,15 @@ class Model(nn.Module):
         self.classifier = RobertaClassificationHead(config, args)
         self.args = args
 
-    def forward(self, inputs_ids, attn_masks,
-                labels=None):
-        outputs = \
-            self.encoder(input_ids=inputs_ids, attention_mask=attn_masks)[0]
+    def forward(self, inputs_ids, attn_masks, labels=None):
+        outputs = self.encoder(input_ids=inputs_ids, attention_mask=attn_masks)[0]
+        cls_feature = outputs[:, 0, :]  # 取CLS向量用于对比损失
         logits = self.classifier(outputs)
-
         prob = torch.sigmoid(logits)
+
         if labels is not None:
             loss_fct = BCELoss()
-            loss = loss_fct(prob, labels.unsqueeze(1).float())
-            return loss, prob
+            loss_cls = loss_fct(prob, labels.unsqueeze(1).float())
+            return loss_cls, prob, cls_feature
         else:
-            return prob
+            return prob, cls_feature

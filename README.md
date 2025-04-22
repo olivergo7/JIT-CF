@@ -68,7 +68,7 @@ python -m JITCF.concatCL.run \
     --max_grad_norm 1.0 \
     --evaluate_during_training \
     --only_adds \
-    --buggy_line_filepath=data/jitcl/changes_complete_buggy_line_level.pkl \
+    --buggy_line_filepath=data/jitcf/changes_complete_buggy_line_level.pkl \
     --seed 42 2>&1 | tee model/jitcf/saved_models_concat_cl/test.log
 
 ```
@@ -122,7 +122,7 @@ python -m JITCF.concat.run \
     --max_grad_norm 1.0 \
     --evaluate_during_training \
     --only_adds \
-    --buggy_line_filepath=data/jitcl/changes_complete_buggy_line_level.pkl \
+    --buggy_line_filepath=data/jitcf/changes_complete_buggy_line_level.pkl \
     --seed 42 2>&1 | tee model/jitcf/saved_models_concat/test.log
 
 

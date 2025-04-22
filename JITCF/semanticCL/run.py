@@ -19,8 +19,9 @@ from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer, RobertaModel)
 from tqdm import tqdm, trange
 import multiprocessing
-from JITFine.semantic.model import Model
-from JITFine.my_util import convert_examples_to_features, TextDataset, eval_result, create_path_if_not_exist
+from JITCF.concatCL.contrastive_loss import ContrastiveLoss
+from JITCF.semantic.model import Model
+from JITCF.my_util import convert_examples_to_features, TextDataset, eval_result, create_path_if_not_exist
 
 logger = logging.getLogger(__name__)
 
@@ -34,38 +35,32 @@ def set_seed(args):
 
 
 def train(args, train_dataset, model, tokenizer):
-    """ Train the model """
-
-    # build dataloader
     train_sampler = RandomSampler(train_dataset)
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, num_workers=4)
 
     args.max_steps = args.epochs * len(train_dataloader)
-    args.save_steps = len(train_dataloader) // 5  # evaluate 5 times each epoch
+    args.save_steps = len(train_dataloader) // 5
+    args.warmup_steps = 0
     model.to(args.device)
 
-    # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
         {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
          'weight_decay': args.weight_decay},
-        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0,
-                                                num_training_steps=args.max_steps)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=args.max_steps)
 
-    # multi-gpu training
     if args.n_gpu > 1:
         model = torch.nn.DataParallel(model)
 
-    # Train!
+    contrastive_criterion = ContrastiveLoss(temperature=0.5).to(args.device)
+
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_dataset))
     logger.info("  Num Epochs = %d", args.epochs)
-    logger.info("  Instantaneous batch size per GPU = %d", args.train_batch_size // max(args.n_gpu, 1))
-    logger.info("  Total train batch size = %d", args.train_batch_size * args.gradient_accumulation_steps)
-    logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
+    logger.info("  Batch size = %d", args.train_batch_size)
     logger.info("  Total optimization steps = %d", args.max_steps)
 
     best_f1 = 0
@@ -78,24 +73,25 @@ def train(args, train_dataset, model, tokenizer):
         tr_loss = 0
         tr_num = 0
         for step, batch in enumerate(bar):
-            (inputs_ids, attn_masks, _, labels) = [x.to(args.device) for x in batch]
+            (inputs_ids, attn_masks,  labels) = [x.to(args.device) for x in batch]
             model.train()
-            loss, logits = model(inputs_ids, attn_masks, labels)
+            labels = labels.cpu()
+            loss_cls, logits, _, features = model(inputs_ids, attn_masks, labels)
+            loss_contrastive = contrastive_criterion(features, labels)
+            loss = loss_cls + loss_contrastive
+
             if args.n_gpu > 1:
                 loss = loss.mean()
-
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
 
-            # report loss
             tr_loss += loss.item()
             tr_num += 1
-            if (step + 1) % 100 == 0:
-                logger.info("epoch {} step {} loss {}".format(idx, step + 1, round(tr_loss / tr_num, 5)))
+            if (step + 1) % args.save_steps == 0:
+                logger.info("epoch {} step {} loss {:.5f}".format(idx, step + 1, tr_loss / tr_num))
                 tr_loss = 0
                 tr_num = 0
 
-            # backward
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
@@ -108,46 +104,36 @@ def train(args, train_dataset, model, tokenizer):
             if (step + 1) % args.save_steps == 0:
                 results = evaluate(args, model, tokenizer, eval_when_training=True)
                 checkpoint_prefix = f'epoch_{idx}_step_{step}'
-                output_dir = os.path.join(args.output_dir, '{}'.format(checkpoint_prefix))
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
+                output_dir = os.path.join(args.output_dir, checkpoint_prefix)
+                os.makedirs(output_dir, exist_ok=True)
                 model_to_save = model.module if hasattr(model, 'module') else model
-                output_dir = os.path.join(output_dir, '{}'.format('model.bin'))
                 torch.save({
                     'epoch': idx,
                     'step': step,
                     'patience': patience,
                     'model_state_dict': model_to_save.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
-                    'scheduler': scheduler.state_dict()}, output_dir)
-                logger.info("Saving epoch %d step %d model checkpoint to %s, patience %d", idx, global_step, output_dir,
-                            patience)
-                # Save model checkpoint
+                    'scheduler': scheduler.state_dict()}, os.path.join(output_dir, 'model.bin'))
+                logger.info("Saved checkpoint to %s", output_dir)
+
                 if results['eval_f1'] > best_f1:
                     best_f1 = results['eval_f1']
-                    logger.info("  " + "*" * 20)
-                    logger.info("  Best f1:%s", round(best_f1, 4))
-                    logger.info("  " + "*" * 20)
-
-                    checkpoint_prefix = 'checkpoint-best-f1'
-                    output_dir = os.path.join(args.output_dir, '{}'.format(checkpoint_prefix))
-                    if not os.path.exists(output_dir):
-                        os.makedirs(output_dir)
-                    model_to_save = model.module if hasattr(model, 'module') else model
-                    output_dir = os.path.join(output_dir, '{}'.format('model.bin'))
-                    patience = 0
+                    logger.info("  Best f1: %.4f", best_f1)
+                    best_dir = os.path.join(args.output_dir, 'checkpoint-best-f1')
+                    os.makedirs(best_dir, exist_ok=True)
                     torch.save({
                         'epoch': idx,
                         'step': step,
                         'patience': patience,
                         'model_state_dict': model_to_save.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
-                        'scheduler': scheduler.state_dict()}, output_dir)
-                    logger.info("Saving model checkpoint to %s", output_dir)
+                        'scheduler': scheduler.state_dict()}, os.path.join(best_dir, 'model.bin'))
+                    logger.info("Saved best model to %s", best_dir)
+                    patience = 0
                 else:
                     patience += 1
                     if patience > args.patience * 5:
-                        logger.info('patience greater than {}, early stop!'.format(args.patience))
+                        logger.info('Early stopping triggered at patience %d', patience)
                         return
 
 
@@ -284,16 +270,13 @@ def main():
                         help="The input training data file (a text file).")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
-
     ## Other parameters
     parser.add_argument("--eval_data_file", nargs=2, type=str,
                         help="An optional input evaluation data file to evaluate the perplexity on (a text file).")
     parser.add_argument("--test_data_file", nargs=2, type=str,
                         help="An optional input evaluation data file to evaluate the perplexity on (a text file).")
-
     parser.add_argument("--model_name_or_path", default=None, type=str,
                         help="The model checkpoint for weights initialization.")
-
     parser.add_argument("--config_name", default="", type=str,
                         help="Pretrained config name or path if not the same as model_name")
     parser.add_argument("--tokenizer_name", default="", type=str,
@@ -311,7 +294,6 @@ def main():
                         help="Whether to run eval on the dev set.")
     parser.add_argument("--evaluate_during_training", action='store_true',
                         help="Run evaluation during training at each logging step.")
-
     parser.add_argument("--train_batch_size", default=4, type=int,
                         help="Batch size per GPU/CPU for training.")
     parser.add_argument("--eval_batch_size", default=4, type=int,
@@ -330,15 +312,12 @@ def main():
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
-
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
     parser.add_argument('--do_seed', type=int, default=123456,
                         help="random seed for data order initialization")
     parser.add_argument('--epochs', type=int, default=1,
                         help="training epochs")
-    parser.add_argument('--no_abstraction', action='store_true', help='Disable abstraction')
-    parser.add_argument('--head_dropout_prob', type=float, default=0.1, help='Head dropout probability')
     parser.add_argument('--feature_size', type=int, default=14,
                         help="Number of features")
     parser.add_argument('--num_labels', type=int, default=2,
@@ -355,7 +334,6 @@ def main():
                         help="Whether to run eval on the only added lines.")
     parser.add_argument("--buggy_line_filepath", type=str,
                         help="complete buggy line-level  data file for RQ3")
-
     args = parser.parse_args()
     create_path_if_not_exist(args.output_dir)
     # Setup CUDA, GPU
